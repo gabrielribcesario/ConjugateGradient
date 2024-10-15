@@ -23,18 +23,18 @@ void ConjugateGradient(const double* A, const double* b, double* x,
     double squaredRes_k = 0.;
     // Calculates r = b - A * x and ||r||^2.
     for (int i = 0; i < n; i++) {
-        *(r_k + i) = 0.;
+        double r_ki = *(b + i);
         int j = 0;
-        for (; j < n / 8; j += 8) {
+        for (; j < 8 * (n / 8); j += 8) {
             __m512d __A = _mm512_load_pd(A + j + i * n);
             __m512d __x = _mm512_load_pd(x + j);
-            *(r_k + i) -= _mm512_reduce_add_pd(_mm512_mul_pd(__A, __x)); 
+            r_ki -= _mm512_reduce_add_pd(_mm512_mul_pd(__A, __x)); 
         }
         for (; j < n; j++) {
-            *(r_k + i) -= (*(A + j + i * n)) * (*(x + j));
+            r_ki -= (*(A + j + i * n)) * (*(x + j));
         }
-        *(r_k + i) += *(b + i);
-        squaredRes_k += (*(r_k + i)) * (*(r_k + i));
+        *(r_k + i) = r_ki;
+        squaredRes_k += r_ki * r_ki;
     }
 
     // If ||r|| <= tol then x already is the solution.
@@ -52,19 +52,20 @@ void ConjugateGradient(const double* A, const double* b, double* x,
             // (r' * r) / (p_k' * A * p_k)
             double alpha_k = 0.;
             for (i = 0; i < n; i++) {
-                *(Ap_k + i) = 0.;
+                double Ap_ki = 0.;
                 int j = 0;
-                for (; j < n / 8; j += 8) {
+                for (; j < 8 * (n / 8); j += 8) {
                     __m512d __A = _mm512_load_pd(A + j + i * n);
                     __m512d __p = _mm512_load_pd(p_k + j);
-                    *(Ap_k + i) += _mm512_reduce_add_pd(_mm512_mul_pd(__A, __p)); 
+                    Ap_ki += _mm512_reduce_add_pd(_mm512_mul_pd(__A, __p)); 
                 }
                 // Data cleanup.
                 for (; j < n; j++) {
-                    *(Ap_k + i) += (*(A + j + i * n)) * (*(p_k + j));
+                    Ap_ki += (*(A + j + i * n)) * (*(p_k + j));
                 }
                 // alpha_k += p_k' * A * p_k
-                alpha_k += (*(p_k + i)) * (*(Ap_k + i));
+                alpha_k += (*(p_k + i)) * Ap_ki;
+                *(Ap_k + i) = Ap_ki;
             }
             alpha_k = squaredRes_k / alpha_k;
             __m512d __alpha = _mm512_set1_pd(alpha_k);
@@ -72,7 +73,7 @@ void ConjugateGradient(const double* A, const double* b, double* x,
             // ||r_(k + 1)||^2.
             double squaredRes_kp1 = 0.;
             // Updates x and r and calculates the new value for ||r||^2.
-            for (i = 0; i < n / 8; i += 8) {
+            for (i = 0; i < 8 * (n / 8); i += 8) {
                 __m512d __Ap_k = _mm512_load_pd(Ap_k + i);
                 __m512d __r = _mm512_load_pd(r_k + i);
                 __m512d __p = _mm512_load_pd(p_k + i);
@@ -88,9 +89,11 @@ void ConjugateGradient(const double* A, const double* b, double* x,
             }
             // Data cleanup.
             for (; i < n; i++) {
-                *(r_k + i) -= alpha_k * (*(Ap_k + i));
+                double r_ki = *(r_k + i);
+                r_ki -= alpha_k * (*(Ap_k + i));
+                *(r_k + i) = r_ki;
+                squaredRes_kp1 += r_ki * r_ki;
                 *(x + i) += alpha_k * (*(p_k + i));
-                squaredRes_kp1 += (*(r_k + i)) * (*(r_k + i));
             }
 
             // Returns the solution if ||r|| < tol
@@ -102,7 +105,7 @@ void ConjugateGradient(const double* A, const double* b, double* x,
             double beta_k = squaredRes_kp1 / squaredRes_k;
             __m512d __beta = _mm512_set1_pd(beta_k);
             // Updates the direction.
-            for (i = 0; i < n / 8; i += 8) {
+            for (i = 0; i < 8 * (n / 8); i += 8) {
                 __m512d __p = _mm512_load_pd(p_k + i);
                 __m512d __r = _mm512_load_pd(r_k + i);
 

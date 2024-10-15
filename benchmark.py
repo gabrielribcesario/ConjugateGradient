@@ -29,11 +29,11 @@ cg_c.restypes = None
 cg_cpp.restypes = None
 
 # timeit.timeit() number.
-repeat = 100000
+repeat = 10000
 # Tolerance.
-tol = 1.E-5
+tol = 1.E-10
 # Number of rows / columns.
-size = 50
+size = 100
 # Maximum number of iterations (>= n).
 max_iter = max(size, 1000)
 
@@ -42,8 +42,13 @@ np.random.seed(42)
 A = np.random.uniform(-10., 10., size=(size, size))
 A = np.dot(A.T, A)
 A_rav = A.ravel()
-kappa_A = np.linalg.cond(A)
-print(f"A's condition number: {kappa_A}")
+
+print("-" * 80)
+if size <= 2000:
+    kappa_A = np.linalg.cond(A)
+    print(f"A's condition number: {kappa_A}")
+    print("-" * 80)
+
 # Original solution.
 x_sol = np.random.uniform(-1., 1., size=(size,))
 # b vector.
@@ -61,6 +66,7 @@ if __name__ == "__main__":
     r_cg_c = np.linalg.norm(b - np.dot(A, x_cg_c))
     print(f"CG average time [ms]: {t_cg_c}")
     print(f"CG norm of residuals: {r_cg_c}")
+    print("-" * 80)
 
     # CG (written in C++)
     ## Time benchmarking.
@@ -73,6 +79,7 @@ if __name__ == "__main__":
     r_cg_cpp = np.linalg.norm(b - np.dot(A, x_cg_cpp))
     print(f"CG++ average time [ms]: {t_cg_cpp}")
     print(f"CG++ norm of residuals: {r_cg_cpp}")
+    print("-" * 80)
 
     # Numpy
     ## Time benchmarking.
@@ -84,6 +91,7 @@ if __name__ == "__main__":
     r_np = np.linalg.norm(b - np.dot(A, x_np))
     print(f"NP average time [ms]: {t_np}")
     print(f"NP norm of residuals: {r_np}")
+    print("-" * 80)
 
     # Export the results.
     results_df = pd.DataFrame({"Numpy": [t_np, r_np],

@@ -24,9 +24,9 @@ extern "C" {
         double squaredRes_k = 0.;
         // Calculates r = b - A * x and ||r||^2.
         for (int i = 0; i < n; i++) {
-            double r_ki = 0.;
+            double r_ki = b[i];
             int j = 0;
-            for (; j < n / 8; j += 8) {
+            for (; j < 8 * (n / 8); j += 8) {
                 __m512d __A = _mm512_load_pd(A + j + i * n);
                 __m512d __x = _mm512_load_pd(x + j);
                 r_ki -= _mm512_reduce_add_pd(_mm512_mul_pd(__A, __x)); 
@@ -34,7 +34,6 @@ extern "C" {
             for (; j < n; j++) {
                 r_ki -= A[j + i * n] * x[j];
             }
-            r_ki += b[i];
             r_k[i] = r_ki;
             squaredRes_k += r_ki * r_ki;
         }
@@ -56,12 +55,11 @@ extern "C" {
                 for (i = 0; i < n; i++) {
                     double Ap_ki = 0.;
                     int j = 0;
-                    for (; j < n / 8; j += 8) {
+                    for (; j < 8 * (n / 8); j += 8) {
                         __m512d __A = _mm512_load_pd(A + j + i * n);
                         __m512d __p = _mm512_load_pd(p_k + j);
                         Ap_ki += _mm512_reduce_add_pd(_mm512_mul_pd(__A, __p)); 
                     }
-                    // Data cleanup.
                     for (; j < n; j++) {
                         Ap_ki += A[j + i * n] * p_k[j];
                     }
@@ -74,7 +72,7 @@ extern "C" {
                 // ||r_(k + 1)||^2.
                 double squaredRes_kp1 = 0.;
                 // Updates x and r and calculates the new value for ||r||^2.
-                for (i = 0; i < n / 8; i += 8) {
+                for (i = 0; i < 8 * (n / 8); i += 8) {
                     __m512d __Ap_k = _mm512_load_pd(Ap_k + i);
                     __m512d __r = _mm512_load_pd(r_k + i);
                     __m512d __p = _mm512_load_pd(p_k + i);
@@ -88,7 +86,6 @@ extern "C" {
 
                     squaredRes_kp1 += _mm512_reduce_add_pd(_mm512_mul_pd(__r, __r));
                 }
-                // Data cleanup.
                 for (; i < n; i++) {
                     double r_kp1 = r_k[i] - alpha_k * Ap_k[i];
                     squaredRes_kp1 += r_kp1 * r_kp1;
@@ -104,8 +101,9 @@ extern "C" {
                 // (r_kp1' * r_kp1) / (r_k' * r_k).
                 double beta_k = squaredRes_kp1 / squaredRes_k;
                 __m512d __beta = _mm512_set1_pd(beta_k);
+
                 // Updates the direction.
-                for (i = 0; i < n / 8; i += 8) {
+                for (i = 0; i < 8 * (n / 8); i += 8) {
                     __m512d __p = _mm512_load_pd(p_k + i);
                     __m512d __r = _mm512_load_pd(r_k + i);
 
