@@ -63,7 +63,7 @@ namespace Preconditioner {
     }
 
     /*
-    static inline void incomplete_choleski() {
+    static inline void solve_ichol() {
         
     }
     */

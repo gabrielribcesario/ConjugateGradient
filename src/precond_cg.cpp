@@ -36,7 +36,7 @@ extern "C" {
         double* r_k = new double[n];
         // ||r_k||.
         double err = 0.;
-        // Calculates r = b - A * x and ||r||^2.
+        // Calculates r = b - A * x and ||r||.
         for (int i = 0; i < n; i++) {
             r_k[i] = b[i];
             int j = 0;
@@ -138,8 +138,7 @@ extern "C" {
                 rz_k = rz_kp1;
 
                 // Updates the direction.
-                i = 0;
-                for (; i < 8 * (n / 8); i += 8) {
+                for (i = 0; i < 8 * (n / 8); i += 8) {
                     __m512d __p = _mm512_load_pd(p_k + i);
                     __m512d __z = _mm512_load_pd(z_k + i);
                     __p = _mm512_add_pd(__z, _mm512_mul_pd(__beta, __p));

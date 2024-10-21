@@ -45,7 +45,8 @@ prec_cg.restypes = None
 unp_cg.restypes = None
 
 # timeit.timeit() number.
-repeat = 10
+# I'm using a lower number of repeats just because unpreconditioned CG is so slow for this linear system.
+repeat = 100
 # Tolerance.
 tol = 1.E-10
 # Number of rows / columns.
@@ -57,15 +58,14 @@ precond = b"ssor"
 # SSOR relaxation factor.
 # For whatever reason a w factor very close to 2 (w > 1.999...) increases the tridiagonal system's
 # convergence rate, even though this also causes kappa(M^-1 * A) to increase.
-w = 1.975
+# This could be because I'm only implicitly calculating w / (2 - w) when solving for the residual.
+w = 1.9999
 
-prec_func = {b"jacobi": jacobi, b"ssor": ssor}#b"incomplete_cholesky": incomplete_cholesky}
+prec_func = {b"jacobi": jacobi, b"ssor": ssor}#b"incomplete_cholesky": ichol}
 prec_enum = {b"jacobi": 0, b"ssor": 1}#b"incomplete_cholesky": 2}
 
 np.random.seed(42)
 # A matrix (n x n symmetric).
-#A = np.random.uniform(-100., 100., size=(size, size))
-#A = np.dot(A.T, A)
 A = tridiag(np.full(shape=(size,), fill_value=5.), np.full(shape=(size - 1,), fill_value=-2.5))
 A_rav = A.ravel()
 
@@ -131,4 +131,4 @@ if __name__ == "__main__":
                                "U_CG": [t_prec_cg, r_prec_cg],
                                "P_CG": [t_unp_cg, r_unp_cg],
                                }, index=["avg dt [ms]", "norm of residuals"])
-    results_df.to_csv("./benchmark_results.csv")
+    results_df.to_csv("./precond_benchmark_results.csv")
