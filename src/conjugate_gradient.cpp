@@ -20,9 +20,10 @@ extern "C" {
                            const size_t n) {
         // k-th residual vector.
         double* r_k = new double[n];
-        // ||r_k||^2.
+        // k-th squared residual norm.
         double squaredRes_k = 0.;
-        // Calculates r = b - A * x and ||r||^2.
+
+        // Calculates r = b - A * x and ||r_k||^2.
         for (int i = 0; i < n; i++) {
             double r_ki = b[i];
             int j = 0;
@@ -38,7 +39,7 @@ extern "C" {
             squaredRes_k += r_ki * r_ki;
         }
 
-        // If ||r|| <= tol then x already is the solution.
+        // If ||r_k|| <= tol then x already is the solution.
         if (sqrt(squaredRes_k) > tol) {
             // k-th direction vector.
             double* p_k = new double[n];
@@ -49,10 +50,12 @@ extern "C" {
 
             // Iterates the steps.
             for (int k = 0; k < max_iter; k++) {
-                int i;
-                // (r_k' * r_k) / (p_k' * A * p_k)
+                // alpha_k = (r_k' * r_k) / (p_k' * A * p_k)
                 double alpha_k = 0.;
-                for (i = 0; i < n; i++) {
+                
+                int i = 0;
+                // Calculates alpha_k and A * p_k.
+                for (; i < n; i++) {
                     double Ap_ki = 0.;
                     int j = 0;
                     for (; j < 8 * (n / 8); j += 8) {
@@ -69,9 +72,9 @@ extern "C" {
                 alpha_k = squaredRes_k / alpha_k;
                 __m512d __alpha = _mm512_set1_pd(alpha_k);
 
-                // ||r_(k + 1)||^2.
+                // (k + 1)-th squared residual norm.
                 double squaredRes_kp1 = 0.;
-                // Updates x and r and calculates the new value for ||r||^2.
+                // Updates x and r and calculates ||r_(k+1)||^2.
                 for (i = 0; i < 8 * (n / 8); i += 8) {
                     __m512d __Ap_k = _mm512_load_pd(Ap_k + i);
                     __m512d __r = _mm512_load_pd(r_k + i);
@@ -93,14 +96,16 @@ extern "C" {
                     r_k[i] = r_kp1;
                 }
 
-                // Returns the solution if ||r|| < tol
+                // Returns the solution if ||r_(k+1)|| < tol.
                 if (sqrt(squaredRes_kp1) <= tol) {
                     break;
                 }
 
-                // (r_kp1' * r_kp1) / (r_k' * r_k).
+                // beta_k = (r_kp1' * r_kp1) / (r_k' * r_k)
                 double beta_k = squaredRes_kp1 / squaredRes_k;
                 __m512d __beta = _mm512_set1_pd(beta_k);
+                // Updates ||r_k||^2.
+                squaredRes_k = squaredRes_kp1;
 
                 // Updates the direction.
                 for (i = 0; i < 8 * (n / 8); i += 8) {
@@ -113,8 +118,6 @@ extern "C" {
                 for (; i < n; i++) {
                     p_k[i] = r_k[i] + beta_k * p_k[i];
                 }
-                // Updates the residual.
-                squaredRes_k = squaredRes_kp1;
             }
             delete[] p_k;
             delete[] Ap_k;
