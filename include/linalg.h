@@ -16,6 +16,17 @@ double dot(const double *a, const double *b, const int n) {
     return c0;
 }
 
+void vvadd(const double *a, const double *b, const double *c, const int n) {
+    int i, peel = n % VLEN; 
+    register double c0 = 0.;
+    if (peel) {
+        for (i = 0; i != peel; ++i) { *(c + i) = *(a + i) + *(b + i); }
+    }
+    #pragma omp simd aligned(a, b, c:VLEN)
+    for (i = peel; i != n; ++i) { *(c + i) = *(a + i) + *(b + i); }
+    return c0;
+}
+
 void mvmul(const double *A, const double *b, double *c, const int m, const int n) {
     int i, j, peel = n % VLEN;
     register double c0;
