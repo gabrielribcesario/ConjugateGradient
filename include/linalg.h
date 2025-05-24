@@ -16,14 +16,25 @@ double dot(const double *a, const double *b, const int n) {
     return c0;
 }
 
-void vvadd(const double *a, const double *b, const double *c, const int n) {
+void vvadd(const double *a, const double *b, const double alpha, const double *c, const int n) {
     int i, peel = n % VLEN; 
     register double c0 = 0.;
     if (peel) {
-        for (i = 0; i != peel; ++i) { *(c + i) = *(a + i) + *(b + i); }
+        for (i = 0; i != peel; ++i) { *(c + i) = *(a + i) + alpha * *(b + i); }
     }
     #pragma omp simd aligned(a, b, c:VLEN)
-    for (i = peel; i != n; ++i) { *(c + i) = *(a + i) + *(b + i); }
+    for (i = peel; i != n; ++i) { *(c + i) = *(a + i) + alpha * *(b + i); }
+    return c0;
+}
+
+void vvsub(const double *a, const double *b, const double alpha, const double *c, const int n) {
+    int i, peel = n % VLEN; 
+    register double c0 = 0.;
+    if (peel) {
+        for (i = 0; i != peel; ++i) { *(c + i) = *(a + i) - alpha * *(b + i); }
+    }
+    #pragma omp simd aligned(a, b, c:VLEN)
+    for (i = peel; i != n; ++i) { *(c + i) = *(a + i) - alpha *(b + i); }
     return c0;
 }
 
