@@ -31,37 +31,38 @@ double norm(const int n, const double *y) {
 }
 
 /* y = alpha*y */
-void vscale(const int n, const double alpha, double *y) {
+void vscale(const int n, const double beta, double *y) {
     int i, peel = n % VLEN; 
     if (peel) {
-        for (i = 0; i != peel; ++i) { *(y + i) *= alpha; }
+        for (i = 0; i != peel; ++i) { *(y + i) *= beta; }
     }
     #pragma omp simd aligned(y:VLEN)
-    for (i = peel; i != n; ++i) { *(y + i) *= alpha; }
+    for (i = peel; i != n; ++i) { *(y + i) *= beta; }
 }
 
 /* y = y + alpha*x */
-void vvadd(const int n, const double alpha, const double *x, double *y) {
+void vvadd(const int n, const double alpha, const double *x, const double beta, double *y) {
     int i, peel = n % VLEN; 
     if (peel) {
-        for (i = 0; i != peel; ++i) { *(y + i) = *(y + i) + alpha * *(x + i); }
+        for (i = 0; i != peel; ++i) { *(y + i) = beta * *(y + i) + alpha * *(x + i); }
     }
     #pragma omp simd aligned(x, y:VLEN)
-    for (i = peel; i != n; ++i) { *(y + i) = *(y + i) + alpha * *(x + i); }
+    for (i = peel; i != n; ++i) { *(y + i) = beta * *(y + i) + alpha * *(x + i); }
 }
 
 /* y = beta*y + alpha*Ax */
-void mvmul(const int m, const int n, const double alpha, const double beta, 
-           const double *A, const double *x, double *y) {
+void mvmul(const int m, const int n, const double alpha, const double *A, const double *x, 
+           const double beta, double *y) { // about as fast as oneMKL cblas_dgemv for larger matrices (icx -O3 -avx512f -qmkl=parallel)
     int i, j, peel = n % VLEN;
     register double sum;
+    #pragma omp parallel for if(n > 999 && m * n > 9999) schedule(static) private(sum) // Fine-tune condition later
     for (i = 0; i != m; ++i) {
         sum = 0.0;
-        if (peel) { // Loop peeling
-            for (j = 0; j != peel; ++j) { sum += *(A + j + i * m) * *(x + j); }
+        if (peel) {
+            for (j = 0; j != peel; ++j) { sum += *(A + j + i * n) * *(x + j); }
         }
         #pragma omp simd reduction(+:sum) aligned(A, x:VLEN) 
-        for (j = peel; j != n; ++j) { sum += *(A + j + i * m) * *(x + j); }
+        for (j = peel; j != n; ++j) { sum += *(A + j + i * n) * *(x + j); }
         *(y + i) = beta * *(y + i) + alpha * sum;
     }
 }
