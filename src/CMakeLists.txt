@@ -20,5 +20,5 @@ add_library(ConjugateGradient SHARED ConjugateGradient.c)
 target_link_libraries(ConjugateGradient OpenMP::OpenMP_CXX ${MATH_LIBRARY})
 target_compile_options(ConjugateGradient PRIVATE "-shared;-fPIC;-O3;-fopenmp;-msse4.2;-lm")
 
-add_executable(cgcompare cgcompare.c)
-target_link_libraries(cgcompare ConjugateGradient)
+add_executable(hilbert hilbert.c)
+target_link_libraries(hilbert ConjugateGradient)

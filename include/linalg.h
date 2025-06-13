@@ -6,6 +6,19 @@
 
 #define VLEN 4
 
+
+/* Σx_i */
+double reduce_sum(const int n, const double *x) {
+    int i, peel = n % VLEN; 
+    register double sum = 0.;
+    if (peel) { 
+        for (i = 0; i != peel; ++i) { sum += x[i]; }
+    }
+    #pragma omp simd reduction(+:sum) aligned(x:VLEN)
+    for (i = peel; i != n; ++i) { sum += x[i]; }
+    return sum;
+}
+
 /* <x, y> */
 double dot(const int n, const double *x, const double *y) {
     int i, peel = n % VLEN; 
