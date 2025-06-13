@@ -1,7 +1,7 @@
 #ifndef PRECONDITIONING_H
 #define PRECONDITIONING_H
 
-#include <linalg.h>
+#include "linalg.h"
 
 /* Two-sided preconditioning */
 
@@ -12,10 +12,10 @@
 void solve_jacobi(int n, const double *D, const double *y, double *x) {
     int i, peel = n % VLEN;
     if (peel) { 
-        for (i = 0; i != peel; ++i) { *(x + i) = *(y + i) / *(D + i * (n + 1)); } 
+        for (i = 0; i != peel; ++i) { x[i] = y[i] / D[i * (n + 1)]; } 
     }
     #pragma omp simd aligned(D, y, x:VLEN)
-    for (i = peel; i != n; ++i) { *(x + i) = *(y + i) / *(D + i * (n + 1)); }
+    for (i = peel; i != n; ++i) { x[i] = y[i] / D[i * (n + 1)]; }
 }
 
 /*
@@ -37,28 +37,28 @@ void solve_ssor(const int n, const double w, const double *M, const double *y, d
         peel = i % VLEN;
         sum = 0.;
         if (peel) { 
-            for (j = 0; j != peel; ++j) { sum += *(x + j) * *(M + j + i * n) / *(M + j * (n + 1)); }
+            for (j = 0; j != peel; ++j) { sum += x[j] * M[j + i * n] / M[j * (n + 1)]; }
         }
         #pragma omp reduction(+:sum) aligned(M, x:VLEN)
         for (j = peel; j != i; ++j) {
-            sum += *(x + j) * *(M + j + i * n) / *(M + j * (n + 1));
+            sum += x[j] * M[j + i * n] / M[j * (n + 1)];
         }
-        *(x + i) = *(y + i) * (2. - w) - sum * w;
+        x[i] = y[i] * (2. - w) - sum * w;
     }
     // Solve (D / w + L)^T * x = u using backward substitution
-    *(x + n - 1) *= w / *(M + n * n - 1);
+    x[n - 1] *= w / M[n * n - 1];
     #pragma omp parallel for if(n > 999) schedule(static) private(sum, peel, j)
     for (i = n - 2; i != -1; --i) {
         peel = (i + 1) % VLEN;
         sum = 0.;
         if (peel) { 
-            for (j = i + 1; j != peel + i + 1; ++j) { sum += *(x + j) * *(M + j + i * n) / *(M + j * (n + 1)); }
+            for (j = i + 1; j != peel + i + 1; ++j) { sum += x[j] * M[j + i * n] / M[j * (n + 1)]; }
         }
         #pragma omp reduction(+:sum) aligned(M, x:VLEN)
         for (j = peel + i + 1; j != n; ++j) {
-            sum += *(x + j) * *(M + j + i * n) / *(M + j * (n + 1));
+            sum += x[j] * M[j + i * n] / M[j * (n + 1)];
         }
-        *(x + i) = (*(x + i) - sum) * w / *(M + i * (n + 1));
+        x[i] = (x[i] - sum) * w / M[i * (n + 1)];
     }
 }
 

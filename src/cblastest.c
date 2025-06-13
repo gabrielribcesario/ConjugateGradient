@@ -43,9 +43,9 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i != m; ++i) {
         for (int j = 0; j != n; ++j) {
-            *(A + i * n + j) = (double) i;
+            A[i * n + j] = (double) i;
         }
-        *(x + i) = (double) i;
+        x[i] = (double) i;
     }
     
     struct timespec tic, toc;
