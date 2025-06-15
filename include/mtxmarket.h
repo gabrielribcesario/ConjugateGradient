@@ -7,7 +7,7 @@
 #include <string.h>
 
 // Parse the matrix market .mat file and store the results in a dense matrix
-bool parse_mat(const char *filename, int *nrows, int *ncols, double **A) {
+bool parse_alloc_mat(const char *filename, int *nrows, int *ncols, double **A) {
     const static size_t buffer_size = 2048;
     FILE *mat = fopen(filename, "r");
     if (!mat) { 
@@ -45,16 +45,39 @@ bool parse_mat(const char *filename, int *nrows, int *ncols, double **A) {
     }
     // Store mat
     while(fgets(line, buffer_size, mat)) {
-        int i, j;
         tok = strtok(line, " "); 
-        i = atoi(tok) - 1;
+        int i = atoi(tok) - 1;
         tok = strtok(NULL, " ");
-        j = atoi(tok) - 1;
+        int j = atoi(tok) - 1;
         tok = strtok(NULL, " ");
         (*A)[i * *ncols + j] = atof(tok);
     }
     fclose(mat);
     printf("%d x %d matrix stored successfully\n", *nrows, *ncols);
+    return true;
+}
+
+// Parse the matrix market .mat file and store the results in a dense matrix
+bool parse_store_mat(const char *filename, const int nrows, const int ncols, double *A) {
+    const static size_t buffer_size = 2048;
+    FILE *mat = fopen(filename, "r");
+    if (!mat) { 
+        fprintf(stderr, "No file named %s", filename);
+        return false;
+    }
+    char line[buffer_size];
+    // Store mat
+    while(fgets(line, buffer_size, mat)) {
+        if (!strncmp(line, "%", 1)) { continue; }
+        char *tok = strtok(line, " "); 
+        int i = atoi(tok) - 1;
+        tok = strtok(NULL, " ");
+        int j = atoi(tok) - 1;
+        tok = strtok(NULL, " ");
+        A[i * ncols + j] = atof(tok);
+    }
+    fclose(mat);
+    printf("%d x %d matrix stored successfully\n", nrows, ncols);
     return true;
 }
 
