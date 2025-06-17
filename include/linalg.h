@@ -6,7 +6,6 @@
 
 #define VLEN 4
 
-
 /* Σx_i */
 double reduce_sum(const int n, const double *x) {
     int i, peel = n % VLEN; 

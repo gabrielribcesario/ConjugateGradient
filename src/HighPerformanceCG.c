@@ -58,7 +58,7 @@ int ConjugateGradient(const int n, const int maxiter, const double tol,
                 alpha_k += p_k[i] * sum; // p_k * A * p_k
             }
             alpha_k = rknorm_sqd / alpha_k; // ||r_k||^2 / (p_k' * A * p_k)
-            // x_(k+1) = x_k + alpha_k*p_k, r_(k+1) = r_k - alpha_k*Ap_k and ||r_(k+1)||
+            // x_(k+1) = x_k + alpha_k*p_k; r_(k+1) = r_k - alpha_k*Ap_k; ||r_(k+1)||
             rkp1norm_sqd = 0.;
             if (peel) { 
                 for (i = 0; i != peel; ++i) { 

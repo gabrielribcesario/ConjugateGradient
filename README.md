@@ -1,3 +1,3 @@
 # ConjugateGradient
 
-A C/C++ implementation of the conjugate gradient method.
+A C implementation of the conjugate gradient method.

@@ -9,15 +9,15 @@
 // Generates a m x n Hilbert matrix
 void HilbertMatrix(int m, int n, double *A) {
     int i, j;
-    for (i = 1; i <= m; ++i) {
-        for (j = 1; j <= n; ++j) { A[(i-1) * n + (j-1)] = 1. / (i + j - 1); }
+    for (i = 0; i < m; ++i) {
+        for (j = 0; j < n; ++j) { A[i * n + j] = 1. / (i + j + 1); }
     }
 }
 
 int main(void) {
-    const int n = 10000;
-    double tol = 1.E-10;
-    int maxiter = n;
+    const int n = 40000;
+    double tol = 1.E-5;
+    int maxiter = 1000;
 
     double *A = malloc(n * n * sizeof(double));
     if (!A) { 
@@ -37,14 +37,6 @@ int main(void) {
         free(b);
         return EXIT_FAILURE; 
     }
-    double *sol = calloc(n, sizeof(double));
-    if (!sol) { 
-        fprintf(stderr, "sol calloc failure\n");
-        free(A);
-        free(b);
-        free(x);
-        return EXIT_FAILURE; 
-    }
 
     HilbertMatrix(n, n, A);
     // x[i] = 1
@@ -59,9 +51,8 @@ int main(void) {
     double elapsed = (toc.tv_sec - tic.tv_sec) + (toc.tv_nsec - tic.tv_nsec) * 1.e-9;
     printf("Ran %d iterations in %.6f[s]\n", iter, elapsed);
     // ||Ax - b||
-    mvmul(n, n, 1., A, x, 0., sol);
-    vvadd(n, 1., b, -1., sol);
-    double err = norm(n, sol);
+    mvmul(n, n, 1., A, x, -1., b);
+    double err = norm(n, b);
     printf("Returned with error %#g\n", err);
 
     free(A);
