@@ -1,0 +1,39 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+cd ..
+mkdir -p data
+cd data
+
+echo "Downloading bcsstk14..."
+wget https://math.nist.gov/pub/MatrixMarket2/Harwell-Boeing/bcsstruc2/bcsstk14.mtx.gz
+gzip -d -f bcsstk14.mtx.gz
+
+echo "Downloading bcsstk16..."
+wget https://math.nist.gov/MatrixMarket/data/Harwell-Boeing/bcsstruc2/bcsstk16.mtx.gz
+gzip -d -f bcsstk16.mtx.gz
+
+echo "Downloading bcsstk27..."
+wget https://math.nist.gov/MatrixMarket/data/Harwell-Boeing/bcsstruc4/bcsstk27.mtx.gz
+gzip -d -f bcsstk27.mtx.gz
+
+echo "Downloading bcsstm19..."
+wget https://math.nist.gov/pub/MatrixMarket2/Harwell-Boeing/bcsstruc3/bcsstm19.mtx.gz
+gzip -d -f bcsstm19.mtx.gz
+
+echo "Downloading s3rmq4m1..."
+wget https://math.nist.gov/pub/MatrixMarket2/misc/cylshell/s3rmq4m1.mtx.gz
+gzip -d -f s3rmq4m1.mtx.gz
+
+echo "Downloading s3rmt3m3..."
+wget https://math.nist.gov/MatrixMarket/data/misc/cylshell/s3rmt3m3.mtx.gz
+gzip -d -f s3rmt3m3.mtx.gz
+
+echo "Done."
+
+echo "Compiling executables..."
+
+cd ..
+mkdir -p build
+cd build
+cmake ../src && make
