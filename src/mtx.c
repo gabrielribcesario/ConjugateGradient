@@ -20,7 +20,7 @@ int main(void) {
 
     int nrows, ncols;
     double *A = NULL; // Must be initialized to null or allocated immediately!
-    if (!parse_mat("../data/bcsstk14.mtx", &nrows, &ncols, &A)) { 
+    if (!parse_alloc_mat("../data/s3rmt3m3.mtx", &nrows, &ncols, &A)) { 
         fprintf(stderr, "mtx failure\n");
         return EXIT_FAILURE;
     }
@@ -29,7 +29,7 @@ int main(void) {
         return EXIT_FAILURE;        
     }
     int n = nrows;
-    double *b = malloc(n * sizeof(double));
+    double *b = calloc(n, sizeof(double));
     if (!b) { 
         fprintf(stderr, "b malloc failure\n");
         free(A);
@@ -42,17 +42,18 @@ int main(void) {
         free(b);
         return EXIT_FAILURE; 
     }
-    double *sol = calloc(n, sizeof(double));
+    double *sol = malloc(n * sizeof(double));
     if (!sol) { 
-        fprintf(stderr, "sol calloc failure\n");
+        fprintf(stderr, "sol malloc failure\n");
         free(A);
         free(b);
         free(x);
         return EXIT_FAILURE; 
     }
-    for (int i = 0; i < n; ++i) { sol[i] = i % 2 == 0 ? -1. : 1.; }
+    for (int i = 0; i < n; ++i) { sol[i] = i % 2 == 0 ? -i : i; }
 
-    for (int i = 0; i < n; ++i) { b[i] = dot(n, A + i * n, sol); }
+    mvmul(n, n, 1., A, sol, 0., b);
+    memcpy(sol, b, n * sizeof(double));
 
     struct timespec tic, toc;
 
@@ -63,11 +64,12 @@ int main(void) {
     clock_gettime(CLOCK_MONOTONIC, &toc);
     double elapsed = (toc.tv_sec - tic.tv_sec) + (toc.tv_nsec - tic.tv_nsec) * 1.e-9;
     // ||Ax - b||
-    mvmul(n, n, 1., A, x, 0., sol);
-    vvadd(n, 1., b, -1., sol);
-    double err = norm(n, sol);
+    mvmul(n, n, 1., A, x, -1., b);
+    double err = norm(n, b);
     printf("|   Ran %d iterations in %.6f[s]\n", iter, elapsed);
     printf("|   Returned with error %#g\n", err);
+
+    memcpy(b, sol, n * sizeof(double));
 
     printf("Preconditioned:\n");
     // Time it
@@ -76,9 +78,8 @@ int main(void) {
     clock_gettime(CLOCK_MONOTONIC, &toc);
     elapsed = (toc.tv_sec - tic.tv_sec) + (toc.tv_nsec - tic.tv_nsec) * 1.e-9;
     // ||Ax - b||
-    mvmul(n, n, 1., A, x, 0., sol);
-    vvadd(n, 1., b, -1., sol);
-    err = norm(n, sol);
+    mvmul(n, n, 1., A, x, -1., b);
+    err = norm(n, b);
     printf("|   Ran %d iterations in %.6f[s]\n", iter, elapsed);
     printf("|   Returned with error %#g\n", err);
 

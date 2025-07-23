@@ -26,7 +26,7 @@ void solve_jacobi(int n, const double *D, const double *y, double *x) {
     if (peel) { 
         for (i = 0; i != peel; ++i) { x[i] = y[i] / D[i * (n + 1)]; } 
     }
-    #pragma omp simd aligned(D, y, x:VLEN)
+    #pragma omp simd aligned(D, y, x:VLEN*8)
     for (i = peel; i != n; ++i) { x[i] = y[i] / D[i * (n + 1)]; }
 }
 
@@ -51,7 +51,7 @@ void solve_ssor(const int n, const double w, const double *M, const double *y, d
         if (peel) { 
             for (j = 0; j != peel; ++j) { sum += x[j] * M[j + i * n] / M[j * (n + 1)]; }
         }
-        #pragma omp reduction(+:sum) aligned(M, x:VLEN)
+        #pragma omp simd reduction(+:sum) aligned(M, x:VLEN*8)
         for (j = peel; j != i; ++j) {
             sum += x[j] * M[j + i * n] / M[j * (n + 1)];
         }
@@ -66,7 +66,7 @@ void solve_ssor(const int n, const double w, const double *M, const double *y, d
         if (peel) { 
             for (j = i + 1; j != peel + i + 1; ++j) { sum += x[j] * M[j + i * n]; }
         }
-        #pragma omp reduction(+:sum) aligned(M, x:VLEN)
+        #pragma omp simd reduction(+:sum) aligned(M, x:VLEN*8)
         for (j = peel + i + 1; j != n; ++j) { sum += x[j] * M[j + i * n]; }
         x[i] = (x[i] - sum) * w / M[i * (n + 1)];
     }

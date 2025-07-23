@@ -4,7 +4,8 @@
 #include <math.h>
 #include <omp.h>
 
-#define VLEN 4
+// Register size [bytes]
+#define VLEN 16
 
 /* Σx_i */
 double reduce_sum(const int n, const double *x) {
@@ -52,7 +53,7 @@ void vscale(const int n, const double beta, double *y) {
     for (i = peel; i != n; ++i) { y[i] *= beta; }
 }
 
-/* y = y + alpha*x */
+/* y = beta * y + alpha*x */
 void vvadd(const int n, const double alpha, const double *x, const double beta, double *y) {
     int i, peel = n % VLEN; 
     if (peel) {
