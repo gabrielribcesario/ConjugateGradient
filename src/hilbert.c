@@ -15,9 +15,12 @@ void HilbertMatrix(int m, int n, double *A) {
 }
 
 int main(void) {
+    // Size of the linear system
     const int n = 40000;
-    double tol = 1.E-5;
-    int maxiter = 1000;
+    // Maximum number of iterations
+    const int maxiter = 1000;
+    // Stopping criterion
+    const double tol = 1e-5;
 
     double *A = malloc(n * n * sizeof(double));
     if (!A) { 
@@ -50,6 +53,7 @@ int main(void) {
     clock_gettime(CLOCK_MONOTONIC, &toc);
     double elapsed = (toc.tv_sec - tic.tv_sec) + (toc.tv_nsec - tic.tv_nsec) * 1.e-9;
     printf("Ran %d iterations in %.6f[s]\n", iter, elapsed);
+
     // ||Ax - b||
     mvmul(n, n, 1., A, x, -1., b);
     double err = norm(n, b);

@@ -8,10 +8,14 @@
 #include "PreconditionedCG.h"
 
 int main(void) {
-    const int pcd = 1; // 0 - Jacobi; 1 - SSOR
+    // 0 - Jacobi; 1 - SSOR
+    const int pcd = 1; 
+    // Relaxation factor
+    const double w = 1.; 
+    // Stopping criterion
     const double tol = 1e-10;
+    // Maximum number of iterations
     const int maxiter = 1000;
-    const double w = 1.; // Relaxation factor
 
     if (maxiter <= 0 || w <= 0. || w >= 2. || tol <= 0.) { 
         fprintf(stderr, "Invalid param\n");
@@ -28,7 +32,7 @@ int main(void) {
         fprintf(stderr, "Non-square matrix\n");
         return EXIT_FAILURE;        
     }
-    int n = nrows;
+    const int n = nrows;
     double *b = calloc(n, sizeof(double));
     if (!b) { 
         fprintf(stderr, "b malloc failure\n");
@@ -50,7 +54,7 @@ int main(void) {
         free(x);
         return EXIT_FAILURE; 
     }
-    for (int i = 0; i < n; ++i) { sol[i] = i % 2 == 0 ? -i : i; }
+    for (int i = 0; i < n; ++i) { sol[i] = i % 2 == 0 ? i : -i; } // x_i = (-i)^i
 
     mvmul(n, n, 1., A, sol, 0., b);
     memcpy(sol, b, n * sizeof(double));

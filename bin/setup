@@ -1,39 +1,93 @@
 #!/bin/bash
 
-cd "$(dirname "$0")"
-cd ..
+cd "$(dirname "$0")"/..
+
+### Download Matrix Market examples ###
+
+echo "Downloading examples..."
+
 mkdir -p data
 cd data
 
-echo "Downloading bcsstk14..."
-wget https://math.nist.gov/pub/MatrixMarket2/Harwell-Boeing/bcsstruc2/bcsstk14.mtx.gz
-gzip -d -f bcsstk14.mtx.gz
-
-echo "Downloading bcsstk16..."
-wget https://math.nist.gov/MatrixMarket/data/Harwell-Boeing/bcsstruc2/bcsstk16.mtx.gz
-gzip -d -f bcsstk16.mtx.gz
-
-echo "Downloading bcsstk27..."
-wget https://math.nist.gov/MatrixMarket/data/Harwell-Boeing/bcsstruc4/bcsstk27.mtx.gz
-gzip -d -f bcsstk27.mtx.gz
-
-echo "Downloading bcsstm19..."
-wget https://math.nist.gov/pub/MatrixMarket2/Harwell-Boeing/bcsstruc3/bcsstm19.mtx.gz
-gzip -d -f bcsstm19.mtx.gz
-
-echo "Downloading s3rmq4m1..."
-wget https://math.nist.gov/pub/MatrixMarket2/misc/cylshell/s3rmq4m1.mtx.gz
-gzip -d -f s3rmq4m1.mtx.gz
-
-echo "Downloading s3rmt3m3..."
-wget https://math.nist.gov/MatrixMarket/data/misc/cylshell/s3rmt3m3.mtx.gz
-gzip -d -f s3rmt3m3.mtx.gz
+if [ ! -f bcsstk14.mtx ]; then
+    wget https://math.nist.gov/pub/MatrixMarket2/Harwell-Boeing/bcsstruc2/bcsstk14.mtx.gz
+    gzip -d -f bcsstk14.mtx.gz
+fi
+if [ ! -f bcsstk16.mtx ]; then
+    wget https://math.nist.gov/MatrixMarket/data/Harwell-Boeing/bcsstruc2/bcsstk16.mtx.gz
+    gzip -d -f bcsstk16.mtx.gz
+fi
+if [ ! -f bcsstk27.mtx ]; then
+    wget https://math.nist.gov/MatrixMarket/data/Harwell-Boeing/bcsstruc4/bcsstk27.mtx.gz
+    gzip -d -f bcsstk27.mtx.gz
+fi
+if [ ! -f bcsstm19.mtx ]; then
+    wget https://math.nist.gov/pub/MatrixMarket2/Harwell-Boeing/bcsstruc3/bcsstm19.mtx.gz
+    gzip -d -f bcsstm19.mtx.gz
+fi
+if [ ! -f s3rmq4m1.mtx ]; then
+    wget https://math.nist.gov/pub/MatrixMarket2/misc/cylshell/s3rmq4m1.mtx.gz
+    gzip -d -f s3rmq4m1.mtx.gz
+fi
+if [ ! -f s3rmt3m3.mtx ]; then
+    wget https://math.nist.gov/MatrixMarket/data/misc/cylshell/s3rmt3m3.mtx.gz
+    gzip -d -f s3rmt3m3.mtx.gz
+fi
 
 echo "Done."
 
+cd ..
+
+### Creates the Python virtual environment ###
+
+VENV_NAME="cg"
+if [ ! -f "$VENV_NAME/bin/activate" ]; then
+    echo "Creating venv..."
+    if [ -d "$VENV_NAME" ]; then 
+        echo "A directory with the same name of the virtual environment (VENV_NAME=$VENV_NAME) " \
+             "already exists, but no activation script was found." \
+             "Rename or remove the directory, or rename VENV_NAME inside the setup script." >&2
+        exit 1
+    fi
+    # Create venv
+    python3 -m venv "$VENV_NAME"
+    if [ $? -eq 1 ]; then
+        echo "Internal error! Could not create virtual environment." >&2
+        exit 1
+    fi
+    source "$VENV_NAME/bin/activate"
+    # Install pip
+    python3 -m pip install pip --upgrade
+    if [ $? -eq 1 ]; then
+        echo "Internal error! Could not install pip." >&2
+        exit 1
+    fi
+    # Install requirements.txt
+    pip install -r requirements.txt
+    if [ $? -eq 1 ]; then
+        echo "Internal error! Could not install the required packages." >&2
+        exit 1
+    fi
+    echo "Done."
+fi
+
+### Compile source code ###
+
 echo "Compiling executables..."
 
-cd ..
 mkdir -p build
 cd build
-cmake ../src && make
+cmake ..
+if [ $? -eq 1 ]; then
+    echo "Internal error! Error when running CMake." >&2
+    exit 1
+fi
+make
+if [ $? -eq 1 ]; then
+    echo "Internal error! Could not compile the source files." >&2
+    exit 1
+fi
+
+echo "Done."
+
+exit 0
